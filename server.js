@@ -75,8 +75,8 @@ function joinRoom(room, guestWs, team) {
   guestWs._room = room;
   room.lastActivity = Date.now();
   const guest = room.players[1];
-  send(guest.ws, { type: "joined", code: room.code, name: room.name, isPrivate: room.isPrivate });
-  send(room.players[0].ws, { type: "opponent_joined" });
+  send(guest.ws, { type: "joined", code: room.code, name: room.name, isPrivate: room.isPrivate, hostTeamSize: room.players[0].team.length });
+  send(room.players[0].ws, { type: "opponent_joined", teamSize: team.length });
 }
 
 function readyState(room) {
