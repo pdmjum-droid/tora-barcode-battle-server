@@ -95,9 +95,23 @@ function leaveRoom(ws) {
   const room = ws._room;
   if (!room) return;
   ws._room = null;
+  const idx = room.players.findIndex((p) => p && p.ws === ws);
+  const isHost = idx === 0;
+  // 対戦開始前にゲストが抜けた場合は部屋を残し、ホストは待機に戻る（同じ番号・クイックマッチで入り直せる）
+  const roomAlive = !isHost && !room.started && room.players.length >= 2;
   // 相手への通知は全フェーズで行う（待機中・対戦中・結果待ちすべて）。
-  room.players.forEach((p) => { if (p && p.ws !== ws) send(p.ws, { type: "opponent_left" }); });
-  cleanupRoom(room);
+  room.players.forEach((p) => { if (p && p.ws !== ws) send(p.ws, { type: "opponent_left", roomAlive }); });
+  if (!roomAlive) { cleanupRoom(room); return; }
+  room.players.splice(idx, 1);
+  room.players.forEach((p) => { if (p) p.ready = false; });
+  room.lastActivity = Date.now();
+  if (room.ttl) clearTimeout(room.ttl);
+  room.ttl = setTimeout(() => {
+    if (room.players.length < 2) {
+      send(room.players[0].ws, { type: "room_expired" });
+      cleanupRoom(room);
+    }
+  }, ROOM_TTL_MS);
 }
 
 const httpServer = http.createServer((req, res) => {
