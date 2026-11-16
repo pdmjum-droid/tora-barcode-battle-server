@@ -190,6 +190,13 @@ wss.on("connection", (ws) => {
       if (room.players.every((p) => p.ready)) startBattle(room);
       return;
     }
+    if (msg.type === "unready") {
+      if (room.started) return;
+      me.ready = false;
+      room.lastActivity = Date.now();
+      broadcast(room, readyState(room));
+      return;
+    }
     if (msg.type === "rematch") {
       if (!room.started) return;
       if (validTeam(msg.team)) me.team = msg.team;
