@@ -207,6 +207,14 @@ wss.on("connection", (ws) => {
       }
       return;
     }
+    if (msg.type === "stamp") {
+      const STAMPS = ["よろしく！", "ありがとう！", "すごい！", "もういちど！"];
+      if (STAMPS.includes(msg.stamp)) {
+        room.lastActivity = Date.now();
+        room.players.forEach((pl) => { if (pl && pl.ws !== ws) send(pl.ws, { type: "stamp", stamp: msg.stamp }); });
+      }
+      return;
+    }
     if (msg.type === "leave") { leaveRoom(ws); return; }
   });
   ws.on("close", () => leaveRoom(ws));
